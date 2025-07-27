@@ -1,0 +1,11 @@
+langchain
+langchain-community
+langchain-core
+langgraph
+llama-index
+llama-index-llms-together
+together
+streamlit
+graphviz
+wikipedia
+python-dotenv 
