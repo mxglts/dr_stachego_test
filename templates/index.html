@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Математический процессор - Визуализация</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            display: flex;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .graph-container {
+            flex: 2;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .controls {
+            flex: 1;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+        
+        .canvas-container {
+            position: relative;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            background: #fafafa;
+        }
+        
+        #graphCanvas {
+            display: block;
+            cursor: crosshair;
+        }
+        
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        
+        .button:hover {
+            background: #0056b3;
+        }
+        
+        .button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .button.stop {
+            background: #dc3545;
+        }
+        
+        .button.stop:hover {
+            background: #c82333;
+        }
+        
+        .log-container {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            background: #f8f9fa;
+        }
+        
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .log-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .log-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .log-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .status.idle {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+        
+        .status.request {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status.calculation {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .status.result {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .node {
+            cursor: move;
+            user-select: none;
+        }
+        
+        .connection {
+            stroke: #666;
+            stroke-width: 2;
+            fill: none;
+        }
+        
+        .connection.active {
+            stroke: #007bff;
+            stroke-width: 3;
+        }
+        
+        .connection.request {
+            stroke: #ffc107;
+            stroke-width: 3;
+        }
+        
+        .connection.calculation {
+            stroke: #17a2b8;
+            stroke-width: 3;
+        }
+        
+        .connection.result {
+            stroke: #28a745;
+            stroke-width: 3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="graph-container">
+            <h2>Визуализация графа</h2>
+            <div class="canvas-container">
+                <canvas id="graphCanvas" width="600" height="400"></canvas>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <h2>Управление</h2>
+            <div>
+                <button id="startBtn" class="button">Запустить</button>
+                <button id="stopBtn" class="button stop" disabled>Остановить</button>
+            </div>
+            
+            <div id="status" class="status idle">
+                Статус: Ожидание
+            </div>
+            
+            <div>
+                <h3>Логи</h3>
+                <div id="logContainer" class="log-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class GraphVisualizer {
+            constructor() {
+                this.canvas = document.getElementById('graphCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.nodes = {};
+                this.connections = {};
+                this.draggedNode = null;
+                this.isProcessing = false;
+                
+                this.setupEventListeners();
+                this.updateInterval = null;
+            }
+            
+            setupEventListeners() {
+                this.canvas.addEventListener('mousedown', this.onMouseDown.bind(this));
+                this.canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
+                this.canvas.addEventListener('mouseup', this.onMouseUp.bind(this));
+                
+                document.getElementById('startBtn').addEventListener('click', this.startProcessing.bind(this));
+                document.getElementById('stopBtn').addEventListener('click', this.stopProcessing.bind(this));
+            }
+            
+            onMouseDown(event) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                
+                for (const [nodeName, node] of Object.entries(this.nodes)) {
+                    const distance = Math.sqrt((x - node.x) ** 2 + (y - node.y) ** 2);
+                    if (distance <= node.radius) {
+                        this.draggedNode = nodeName;
+                        break;
+                    }
+                }
+            }
+            
+            onMouseMove(event) {
+                if (this.draggedNode) {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const x = event.clientX - rect.left;
+                    const y = event.clientY - rect.top;
+                    
+                    this.nodes[this.draggedNode].x = x;
+                    this.nodes[this.draggedNode].y = y;
+                    
+                    // Обновляем позицию на сервере
+                    fetch('/api/update_node', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            node: this.draggedNode,
+                            x: x,
+                            y: y
+                        })
+                    });
+                    
+                    this.draw();
+                }
+            }
+            
+            onMouseUp() {
+                this.draggedNode = null;
+            }
+            
+            startProcessing() {
+                fetch('/api/start')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'started') {
+                            this.isProcessing = true;
+                            document.getElementById('startBtn').disabled = true;
+                            document.getElementById('stopBtn').disabled = false;
+                            this.addLog('Программа запущена', 'success');
+                            this.startUpdateInterval();
+                        }
+                    });
+            }
+            
+            stopProcessing() {
+                fetch('/api/stop')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'stopped') {
+                            this.isProcessing = false;
+                            document.getElementById('startBtn').disabled = false;
+                            document.getElementById('stopBtn').disabled = true;
+                            this.addLog('Программа остановлена', 'warning');
+                            this.stopUpdateInterval();
+                        }
+                    });
+            }
+            
+            startUpdateInterval() {
+                this.updateInterval = setInterval(() => {
+                    this.updateState();
+                }, 100);
+            }
+            
+            stopUpdateInterval() {
+                if (this.updateInterval) {
+                    clearInterval(this.updateInterval);
+                    this.updateInterval = null;
+                }
+            }
+            
+            updateState() {
+                fetch('/api/state')
+                    .then(response => response.json())
+                    .then(data => {
+                        this.updateGraph(data.graph);
+                        this.updateStatus(data.processor);
+                        this.updateConnections(data.processor);
+                    });
+            }
+            
+            updateGraph(graphData) {
+                this.nodes = graphData.nodes;
+                this.connections = graphData.connections;
+                this.draw();
+            }
+            
+            updateStatus(processorState) {
+                const statusElement = document.getElementById('status');
+                const status = processorState.status;
+                
+                statusElement.className = `status ${status}`;
+                
+                let statusText = `Статус: ${this.getStatusText(status)}`;
+                if (processorState.operation) {
+                    statusText += ` | Операция: ${processorState.operation}`;
+                }
+                if (processorState.numbers) {
+                    statusText += ` | Числа: ${processorState.numbers[0]}, ${processorState.numbers[1]}`;
+                }
+                if (processorState.result !== null) {
+                    statusText += ` | Результат: ${processorState.result}`;
+                }
+                
+                statusElement.textContent = statusText;
+            }
+            
+            getStatusText(status) {
+                const statusMap = {
+                    'idle': 'Ожидание',
+                    'request': 'Запрос',
+                    'calculation': 'Вычисление',
+                    'result': 'Результат'
+                };
+                return statusMap[status] || status;
+            }
+            
+            updateConnections(processorState) {
+                const status = processorState.status;
+                const operation = processorState.operation;
+                
+                // Сбрасываем все соединения
+                this.resetConnections();
+                
+                if (status === 'request') {
+                    if (operation === 'sum') {
+                        this.highlightConnection('req_to_sum', 'request');
+                    } else if (operation === 'product') {
+                        this.highlightConnection('req_to_product', 'request');
+                    }
+                } else if (status === 'calculation') {
+                    if (operation === 'sum') {
+                        this.highlightConnection('req_to_sum', 'calculation');
+                    } else if (operation === 'product') {
+                        this.highlightConnection('req_to_product', 'calculation');
+                    }
+                } else if (status === 'result') {
+                    if (operation === 'sum') {
+                        this.highlightConnection('sum_to_req', 'result');
+                    } else if (operation === 'product') {
+                        this.highlightConnection('product_to_req', 'result');
+                    }
+                }
+            }
+            
+            resetConnections() {
+                // Сбрасываем подсветку всех соединений
+                this.draw();
+            }
+            
+            highlightConnection(connectionName, type) {
+                // Перерисовываем с подсветкой конкретного соединения
+                this.draw();
+                
+                const connection = this.connections[connectionName];
+                if (connection) {
+                    this.ctx.strokeStyle = this.getConnectionColor(type);
+                    this.ctx.lineWidth = 3;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(connection.start[0], connection.start[1]);
+                    this.ctx.lineTo(connection.end[0], connection.end[1]);
+                    this.ctx.stroke();
+                }
+            }
+            
+            getConnectionColor(type) {
+                const colors = {
+                    'request': '#ffc107',
+                    'calculation': '#17a2b8',
+                    'result': '#28a745'
+                };
+                return colors[type] || '#666';
+            }
+            
+            draw() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Рисуем соединения
+                this.drawConnections();
+                
+                // Рисуем узлы
+                this.drawNodes();
+            }
+            
+            drawConnections() {
+                this.ctx.strokeStyle = '#666';
+                this.ctx.lineWidth = 2;
+                
+                for (const [name, connection] of Object.entries(this.connections)) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(connection.start[0], connection.start[1]);
+                    this.ctx.lineTo(connection.end[0], connection.end[1]);
+                    this.ctx.stroke();
+                }
+            }
+            
+            drawNodes() {
+                for (const [name, node] of Object.entries(this.nodes)) {
+                    // Рисуем круг
+                    this.ctx.fillStyle = this.getNodeColor(name);
+                    this.ctx.beginPath();
+                    this.ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI);
+                    this.ctx.fill();
+                    
+                    // Рисуем границу
+                    this.ctx.strokeStyle = '#333';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.stroke();
+                    
+                    // Рисуем текст
+                    this.ctx.fillStyle = '#fff';
+                    this.ctx.font = '14px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.fillText(this.getNodeLabel(name), node.x, node.y);
+                }
+            }
+            
+            getNodeColor(name) {
+                const colors = {
+                    'request': '#007bff',
+                    'sum': '#28a745',
+                    'product': '#ffc107'
+                };
+                return colors[name] || '#6c757d';
+            }
+            
+            getNodeLabel(name) {
+                const labels = {
+                    'request': 'Запрос',
+                    'sum': 'Сумма',
+                    'product': 'Произведение'
+                };
+                return labels[name] || name;
+            }
+            
+            addLog(message, type = 'info') {
+                const logContainer = document.getElementById('logContainer');
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry log-${type}`;
+                logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                logContainer.appendChild(logEntry);
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+        }
+        
+        // Инициализация приложения
+        document.addEventListener('DOMContentLoaded', () => {
+            const visualizer = new GraphVisualizer();
+            
+            // Начальная загрузка состояния
+            visualizer.updateState();
+            
+            // Добавляем начальное сообщение
+            visualizer.addLog('Веб-приложение загружено', 'info');
+        });
+    </script>
+</body>
+</html> 

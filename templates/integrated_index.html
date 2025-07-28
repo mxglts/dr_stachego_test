@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Интегрированная система - Математика + Агенты</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .section h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .canvas-container {
+            position: relative;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            background: #fafafa;
+            margin-bottom: 15px;
+        }
+        
+        #mathCanvas {
+            display: block;
+            cursor: crosshair;
+        }
+        
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        
+        .button:hover {
+            background: #0056b3;
+        }
+        
+        .button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .button.stop {
+            background: #dc3545;
+        }
+        
+        .button.stop:hover {
+            background: #c82333;
+        }
+        
+        .button.agent {
+            background: #28a745;
+        }
+        
+        .button.agent:hover {
+            background: #218838;
+        }
+        
+        .log-container {
+            margin-top: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            background: #f8f9fa;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        
+        .log-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .log-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .log-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .log-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .status.idle {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+        
+        .status.request {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status.calculation {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .status.result {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .agent-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .agent-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .agent-result {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+            min-height: 100px;
+        }
+        
+        .agent-history {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .history-item {
+            border: 1px solid #eee;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 5px 0;
+            background: #fafafa;
+        }
+        
+        .history-item .timestamp {
+            font-size: 11px;
+            color: #666;
+        }
+        
+        .history-item .input {
+            font-weight: bold;
+            color: #333;
+            margin: 5px 0;
+        }
+        
+        .history-item .result {
+            color: #666;
+            font-style: italic;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 15px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom-color: #007bff;
+            color: #007bff;
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🤖 Интегрированная система</h1>
+        <p>Математическая визуализация + Система агентов</p>
+    </div>
+
+    <div class="container">
+        <!-- Левая панель: Математическая визуализация -->
+        <div class="section">
+            <h2>🧮 Математическая визуализация</h2>
+            <div class="canvas-container">
+                <canvas id="mathCanvas" width="500" height="400"></canvas>
+            </div>
+            
+            <div>
+                <button id="startBtn" class="button">Запустить</button>
+                <button id="stopBtn" class="button stop" disabled>Остановить</button>
+            </div>
+            
+            <div id="mathStatus" class="status idle">
+                Статус: Ожидание
+            </div>
+            
+            <div>
+                <h3>Логи математики</h3>
+                <div id="mathLogContainer" class="log-container"></div>
+            </div>
+        </div>
+        
+        <!-- Правая панель: Система агентов -->
+        <div class="section">
+            <h2>🤖 Система агентов</h2>
+            
+            <div class="agent-input">
+                <input type="text" id="agentInput" placeholder="Введите ваш запрос..." />
+                <button id="sendAgentBtn" class="button agent">Отправить</button>
+            </div>
+            
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('result')">Результат</button>
+                <button class="tab" onclick="showTab('history')">История</button>
+            </div>
+            
+            <div id="resultTab" class="tab-content active">
+                <div id="agentResult" class="agent-result">
+                    <p>Введите запрос выше, чтобы получить ответ от агентов...</p>
+                </div>
+            </div>
+            
+            <div id="historyTab" class="tab-content">
+                <div id="agentHistory" class="agent-history">
+                    <p>История запросов появится здесь...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class MathVisualizer {
+            constructor() {
+                this.canvas = document.getElementById('mathCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.nodes = {};
+                this.connections = {};
+                this.draggedNode = null;
+                this.isProcessing = false;
+                
+                this.setupEventListeners();
+                this.updateInterval = null;
+            }
+            
+            setupEventListeners() {
+                this.canvas.addEventListener('mousedown', this.onMouseDown.bind(this));
+                this.canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
+                this.canvas.addEventListener('mouseup', this.onMouseUp.bind(this));
+                
+                document.getElementById('startBtn').addEventListener('click', this.startProcessing.bind(this));
+                document.getElementById('stopBtn').addEventListener('click', this.stopProcessing.bind(this));
+            }
+            
+            onMouseDown(event) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                
+                for (const [nodeName, node] of Object.entries(this.nodes)) {
+                    const distance = Math.sqrt((x - node.x) ** 2 + (y - node.y) ** 2);
+                    if (distance <= node.radius) {
+                        this.draggedNode = nodeName;
+                        break;
+                    }
+                }
+            }
+            
+            onMouseMove(event) {
+                if (this.draggedNode) {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const x = event.clientX - rect.left;
+                    const y = event.clientY - rect.top;
+                    
+                    this.nodes[this.draggedNode].x = x;
+                    this.nodes[this.draggedNode].y = y;
+                    
+                    fetch('/api/update_node', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            node: this.draggedNode,
+                            x: x,
+                            y: y
+                        })
+                    });
+                    
+                    this.draw();
+                }
+            }
+            
+            onMouseUp() {
+                this.draggedNode = null;
+            }
+            
+            startProcessing() {
+                fetch('/api/start')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'started') {
+                            this.isProcessing = true;
+                            document.getElementById('startBtn').disabled = true;
+                            document.getElementById('stopBtn').disabled = false;
+                            this.addLog('Программа запущена', 'success');
+                            this.startUpdateInterval();
+                        }
+                    });
+            }
+            
+            stopProcessing() {
+                fetch('/api/stop')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'stopped') {
+                            this.isProcessing = false;
+                            document.getElementById('startBtn').disabled = false;
+                            document.getElementById('stopBtn').disabled = true;
+                            this.addLog('Программа остановлена', 'warning');
+                            this.stopUpdateInterval();
+                        }
+                    });
+            }
+            
+            startUpdateInterval() {
+                this.updateInterval = setInterval(() => {
+                    this.updateState();
+                }, 100);
+            }
+            
+            stopUpdateInterval() {
+                if (this.updateInterval) {
+                    clearInterval(this.updateInterval);
+                    this.updateInterval = null;
+                }
+            }
+            
+            updateState() {
+                fetch('/api/state')
+                    .then(response => response.json())
+                    .then(data => {
+                        this.updateGraph(data.graph);
+                        this.updateStatus(data.processor);
+                        this.updateConnections(data.processor);
+                    });
+            }
+            
+            updateGraph(graphData) {
+                this.nodes = graphData.nodes;
+                this.connections = graphData.connections;
+                this.draw();
+            }
+            
+            updateStatus(processorState) {
+                const statusElement = document.getElementById('mathStatus');
+                const status = processorState.status;
+                
+                statusElement.className = `status ${status}`;
+                
+                let statusText = `Статус: ${this.getStatusText(status)}`;
+                if (processorState.operation) {
+                    statusText += ` | Операция: ${processorState.operation}`;
+                }
+                if (processorState.numbers) {
+                    statusText += ` | Числа: ${processorState.numbers[0]}, ${processorState.numbers[1]}`;
+                }
+                if (processorState.result !== null) {
+                    statusText += ` | Результат: ${processorState.result}`;
+                }
+                
+                statusElement.textContent = statusText;
+            }
+            
+            getStatusText(status) {
+                const statusMap = {
+                    'idle': 'Ожидание',
+                    'request': 'Запрос',
+                    'calculation': 'Вычисление',
+                    'result': 'Результат'
+                };
+                return statusMap[status] || status;
+            }
+            
+            updateConnections(processorState) {
+                const status = processorState.status;
+                const operation = processorState.operation;
+                
+                this.resetConnections();
+                
+                if (status === 'request') {
+                    if (operation === 'sum') {
+                        this.highlightConnection('req_to_sum', 'request');
+                    } else if (operation === 'product') {
+                        this.highlightConnection('req_to_product', 'request');
+                    }
+                } else if (status === 'calculation') {
+                    if (operation === 'sum') {
+                        this.highlightConnection('req_to_sum', 'calculation');
+                    } else if (operation === 'product') {
+                        this.highlightConnection('req_to_product', 'calculation');
+                    }
+                } else if (status === 'result') {
+                    if (operation === 'sum') {
+                        this.highlightConnection('sum_to_req', 'result');
+                    } else if (operation === 'product') {
+                        this.highlightConnection('product_to_req', 'result');
+                    }
+                }
+            }
+            
+            resetConnections() {
+                this.draw();
+            }
+            
+            highlightConnection(connectionName, type) {
+                this.draw();
+                
+                const connection = this.connections[connectionName];
+                if (connection) {
+                    this.ctx.strokeStyle = this.getConnectionColor(type);
+                    this.ctx.lineWidth = 3;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(connection.start[0], connection.start[1]);
+                    this.ctx.lineTo(connection.end[0], connection.end[1]);
+                    this.ctx.stroke();
+                }
+            }
+            
+            getConnectionColor(type) {
+                const colors = {
+                    'request': '#ffc107',
+                    'calculation': '#17a2b8',
+                    'result': '#28a745'
+                };
+                return colors[type] || '#666';
+            }
+            
+            draw() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                this.drawConnections();
+                this.drawNodes();
+            }
+            
+            drawConnections() {
+                this.ctx.strokeStyle = '#666';
+                this.ctx.lineWidth = 2;
+                
+                for (const [name, connection] of Object.entries(this.connections)) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(connection.start[0], connection.start[1]);
+                    this.ctx.lineTo(connection.end[0], connection.end[1]);
+                    this.ctx.stroke();
+                }
+            }
+            
+            drawNodes() {
+                for (const [name, node] of Object.entries(this.nodes)) {
+                    this.ctx.fillStyle = this.getNodeColor(name);
+                    this.ctx.beginPath();
+                    this.ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI);
+                    this.ctx.fill();
+                    
+                    this.ctx.strokeStyle = '#333';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.stroke();
+                    
+                    this.ctx.fillStyle = '#fff';
+                    this.ctx.font = '14px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.fillText(this.getNodeLabel(name), node.x, node.y);
+                }
+            }
+            
+            getNodeColor(name) {
+                const colors = {
+                    'request': '#007bff',
+                    'sum': '#28a745',
+                    'product': '#ffc107'
+                };
+                return colors[name] || '#6c757d';
+            }
+            
+            getNodeLabel(name) {
+                const labels = {
+                    'request': 'Запрос',
+                    'sum': 'Сумма',
+                    'product': 'Произведение'
+                };
+                return labels[name] || name;
+            }
+            
+            addLog(message, type = 'info') {
+                const logContainer = document.getElementById('mathLogContainer');
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry log-${type}`;
+                logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                logContainer.appendChild(logEntry);
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+        }
+
+        class AgentSystem {
+            constructor() {
+                this.setupEventListeners();
+            }
+            
+            setupEventListeners() {
+                document.getElementById('sendAgentBtn').addEventListener('click', this.sendQuery.bind(this));
+                document.getElementById('agentInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.sendQuery();
+                    }
+                });
+            }
+            
+            sendQuery() {
+                const input = document.getElementById('agentInput');
+                const query = input.value.trim();
+                
+                if (!query) {
+                    this.showError('Введите запрос');
+                    return;
+                }
+                
+                this.showLoading();
+                
+                fetch('/api/agent/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query: query })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    this.showResult(data);
+                    input.value = '';
+                    this.loadHistory();
+                })
+                .catch(error => {
+                    this.showError(`Ошибка: ${error.message}`);
+                });
+            }
+            
+            showLoading() {
+                const resultDiv = document.getElementById('agentResult');
+                resultDiv.innerHTML = '<p>🤔 Обрабатываю запрос...</p>';
+            }
+            
+            showResult(data) {
+                const resultDiv = document.getElementById('agentResult');
+                
+                if (data.error) {
+                    resultDiv.innerHTML = `<p style="color: red;">❌ Ошибка: ${data.error}</p>`;
+                    return;
+                }
+                
+                let html = '<div>';
+                html += `<h4>🤖 Результат от агента: ${data.next_agent?.replace('_', ' ').toUpperCase() || 'ОБЩИЙ'}</h4>`;
+                html += `<p><strong>Запрос:</strong> ${data.messages?.[0]?.content || 'Неизвестно'}</p>`;
+                html += `<p><strong>Ответ:</strong> ${data.result || 'Нет ответа'}</p>`;
+                
+                if (data.messages && data.messages.length > 1) {
+                    html += '<h5>💬 Диалог:</h5>';
+                    html += '<div style="max-height: 200px; overflow-y: auto; background: #f8f9fa; padding: 10px; border-radius: 5px;">';
+                    data.messages.forEach((msg, index) => {
+                        const isUser = msg.type === 'human' || index === 0;
+                        const icon = isUser ? '👤' : '🤖';
+                        html += `<p><strong>${icon}</strong> ${msg.content}</p>`;
+                    });
+                    html += '</div>';
+                }
+                
+                html += '</div>';
+                resultDiv.innerHTML = html;
+            }
+            
+            showError(message) {
+                const resultDiv = document.getElementById('agentResult');
+                resultDiv.innerHTML = `<p style="color: red;">❌ ${message}</p>`;
+            }
+            
+            loadHistory() {
+                fetch('/api/agent/history')
+                    .then(response => response.json())
+                    .then(history => {
+                        this.displayHistory(history);
+                    })
+                    .catch(error => {
+                        console.error('Ошибка загрузки истории:', error);
+                    });
+            }
+            
+            displayHistory(history) {
+                const historyDiv = document.getElementById('agentHistory');
+                
+                if (history.length === 0) {
+                    historyDiv.innerHTML = '<p>История пуста</p>';
+                    return;
+                }
+                
+                let html = '';
+                history.reverse().forEach(item => {
+                    const timestamp = new Date(item.timestamp).toLocaleString();
+                    html += `
+                        <div class="history-item">
+                            <div class="timestamp">${timestamp}</div>
+                            <div class="input"><strong>Запрос:</strong> ${item.input}</div>
+                            <div class="result"><strong>Ответ:</strong> ${item.result?.result || 'Нет ответа'}</div>
+                        </div>
+                    `;
+                });
+                
+                historyDiv.innerHTML = html;
+            }
+        }
+
+        function showTab(tabName) {
+            // Скрываем все вкладки
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Показываем выбранную вкладку
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            event.target.classList.add('active');
+            
+            // Если выбрана вкладка истории, загружаем её
+            if (tabName === 'history') {
+                agentSystem.loadHistory();
+            }
+        }
+
+        // Инициализация приложения
+        document.addEventListener('DOMContentLoaded', () => {
+            window.mathVisualizer = new MathVisualizer();
+            window.agentSystem = new AgentSystem();
+            
+            // Начальная загрузка состояния
+            mathVisualizer.updateState();
+            
+            // Добавляем начальное сообщение
+            mathVisualizer.addLog('Интегрированное приложение загружено', 'info');
+        });
+    </script>
+</body>
+</html> 

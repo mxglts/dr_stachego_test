@@ -5,6 +5,11 @@ import threading
 import math
 from typing import Literal, Dict, List, Tuple, Any
 import json
+import os
+from datetime import datetime
+
+# Импортируем систему агентов
+from agents import run_agent_system, create_agent_graph
 
 app = Flask(__name__)
 
@@ -151,9 +156,40 @@ class GraphVisualizer:
 # Глобальный экземпляр визуализатора
 graph_visualizer = GraphVisualizer()
 
+# Система агентов
+class AgentSystem:
+    def __init__(self):
+        self.agent_graph = create_agent_graph()
+        self.conversation_history = []
+        
+    def process_query(self, user_input: str) -> Dict[str, Any]:
+        """Обрабатывает запрос пользователя через систему агентов"""
+        try:
+            result = run_agent_system(user_input)
+            self.conversation_history.append({
+                'timestamp': datetime.now().isoformat(),
+                'input': user_input,
+                'result': result
+            })
+            return result
+        except Exception as e:
+            return {
+                'error': str(e),
+                'messages': [],
+                'result': f'Ошибка обработки запроса: {e}',
+                'next_agent': 'general_agent'
+            }
+    
+    def get_conversation_history(self) -> List[Dict[str, Any]]:
+        """Возвращает историю разговоров"""
+        return self.conversation_history
+
+# Глобальный экземпляр системы агентов
+agent_system = AgentSystem()
+
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('integrated_index.html')
 
 @app.route('/api/start')
 def start_processing():
@@ -187,6 +223,24 @@ def update_node():
         return jsonify({"status": "updated"})
     
     return jsonify({"status": "error", "message": "Invalid data"})
+
+@app.route('/api/agent/query', methods=['POST'])
+def agent_query():
+    """Обрабатывает запрос к системе агентов"""
+    data = request.get_json()
+    user_input = data.get('query', '')
+    
+    if not user_input:
+        return jsonify({"error": "Query is required"})
+    
+    result = agent_system.process_query(user_input)
+    return jsonify(result)
+
+@app.route('/api/agent/history')
+def get_agent_history():
+    """Возвращает историю разговоров с агентами"""
+    history = agent_system.get_conversation_history()
+    return jsonify(history)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000) 
