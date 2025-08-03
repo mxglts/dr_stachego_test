@@ -3,53 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Интегрированная система - Математика + Агенты</title>
+    <title>Многоагентная система для управления производисвенными процессами</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Merriweather', serif;
             margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
+            padding: 0;
+            background-color: #f8f9fa;
+            color: #333;
+            font-size: 18px;
         }
         
         .header {
-            text-align: center;
-            margin-bottom: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-color: #6c757d;
             color: white;
-            padding: 20px;
-            border-radius: 10px;
+            padding: 20px 0;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 42px;
+            font-family: 'Merriweather', serif;
+            font-weight: normal;
+            letter-spacing: 1px;
         }
         
         .container {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: 30px;
             max-width: 1400px;
-            margin: 0 auto;
+            margin: 30px auto;
+            padding: 0 20px;
         }
         
         .section {
             background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
         }
         
         .section h2 {
             margin-top: 0;
-            color: #333;
-            border-bottom: 2px solid #eee;
+            margin-bottom: 20px;
+            color: #495057;
+            border-bottom: 2px solid #dee2e6;
             padding-bottom: 10px;
+            font-size: 24px;
+            font-weight: normal;
         }
         
-        .canvas-container {
-            position: relative;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            background: #fafafa;
-            margin-bottom: 15px;
-        }
+                 .canvas-container {
+             position: relative;
+             border: 2px solid #dee2e6;
+             border-radius: 6px;
+             background: #fafafa;
+             margin-bottom: 20px;
+             resize: both;
+             overflow: hidden;
+             min-width: 1000px;
+             min-height: 700px;
+             max-width: 1600px;
+             max-height: 1000px;
+         }
         
         #mathCanvas {
             display: block;
@@ -57,176 +77,182 @@
         }
         
         .button {
-            background: #007bff;
+            background: #495057;
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
+            padding: 14px 28px;
+            border-radius: 4px;
             cursor: pointer;
             margin: 5px;
-            font-size: 14px;
+            font-size: 18px;
+            font-family: 'Merriweather', serif;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
         
         .button:hover {
-            background: #0056b3;
+            background: #343a40;
+            transform: translateY(-1px);
         }
         
         .button:disabled {
-            background: #6c757d;
+            background: #adb5bd;
             cursor: not-allowed;
+            transform: none;
+        }
+        
+        .button.start {
+            background: #28a745;
+        }
+        
+        .button.start:hover:not(:disabled) {
+            background: #218838;
+        }
+        
+        .button.start:disabled {
+            background: #6c757d;
+            opacity: 0.6;
         }
         
         .button.stop {
             background: #dc3545;
         }
         
-        .button.stop:hover {
+        .button.stop:hover:not(:disabled) {
             background: #c82333;
         }
         
+        .button.stop.clicked {
+            background: #ffc107;
+            color: #212529;
+            transform: scale(0.95);
+        }
+        
+        .button.reset {
+            background: #6f42c1;
+        }
+        
+        .button.reset:hover:not(:disabled) {
+            background: #5a32a3;
+        }
+        
+        .button.reset:disabled {
+            background: #adb5bd;
+            opacity: 0.6;
+        }
+        
         .button.agent {
-            background: #28a745;
+            background: #007bff;
         }
         
         .button.agent:hover {
-            background: #218838;
+            background: #0056b3;
         }
         
-        .log-container {
-            margin-top: 15px;
-            max-height: 200px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            padding: 10px;
-            background: #f8f9fa;
-            font-family: monospace;
-            font-size: 12px;
-        }
-        
-        .log-entry {
-            margin: 5px 0;
-            padding: 5px;
-            border-radius: 3px;
-        }
-        
-        .log-info {
-            background: #d1ecf1;
-            color: #0c5460;
-        }
-        
-        .log-success {
-            background: #d4edda;
-            color: #155724;
-        }
-        
-        .log-warning {
-            background: #fff3cd;
-            color: #856404;
-        }
-        
-        .log-error {
-            background: #f8d7da;
-            color: #721c24;
-        }
-        
-        .status {
-            margin: 10px 0;
-            padding: 10px;
-            border-radius: 5px;
-            font-weight: bold;
-        }
-        
-        .status.idle {
-            background: #e2e3e5;
-            color: #383d41;
-        }
-        
-        .status.request {
-            background: #fff3cd;
-            color: #856404;
-        }
-        
-        .status.calculation {
-            background: #d1ecf1;
-            color: #0c5460;
-        }
-        
-        .status.result {
-            background: #d4edda;
-            color: #155724;
+        .button.agent:disabled {
+            background: #adb5bd;
+            opacity: 0.6;
         }
         
         .agent-input {
             display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
+            gap: 12px;
+            margin-bottom: 25px;
         }
         
         .agent-input input {
             flex: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
+            padding: 14px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 18px;
+            font-family: 'Merriweather', serif;
+        }
+        
+        .agent-input input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+        
+        .agent-input input:disabled {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            cursor: not-allowed;
         }
         
         .agent-result {
             background: #f8f9fa;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            padding: 15px;
-            margin-top: 15px;
-            min-height: 100px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 20px;
+            min-height: 120px;
+            font-family: 'Merriweather', serif;
+            font-size: 18px;
+        }
+        
+        .agent-logs {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Merriweather', serif;
+            font-size: 16px;
         }
         
         .agent-history {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 20px;
             max-height: 300px;
             overflow-y: auto;
+            font-family: 'Merriweather', serif;
+            font-size: 18px;
         }
         
-        .history-item {
-            border: 1px solid #eee;
-            border-radius: 5px;
-            padding: 10px;
-            margin: 5px 0;
-            background: #fafafa;
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 4px 0;
         }
         
-        .history-item .timestamp {
-            font-size: 11px;
-            color: #666;
+        .log-entry.info {
+            color: #0066cc;
         }
         
-        .history-item .input {
-            font-weight: bold;
-            color: #333;
-            margin: 5px 0;
+        .log-entry.error {
+            color: #cc0000;
         }
         
-        .history-item .result {
-            color: #666;
-            font-style: italic;
+        .log-entry.success {
+            color: #00cc00;
         }
         
         .tabs {
             display: flex;
-            border-bottom: 1px solid #ddd;
-            margin-bottom: 15px;
+            border-bottom: 1px solid #dee2e6;
+            margin-bottom: 20px;
         }
         
         .tab {
-            padding: 10px 20px;
-            cursor: pointer;
-            border: none;
             background: none;
+            border: none;
+            padding: 14px 28px;
+            cursor: pointer;
             border-bottom: 2px solid transparent;
+            font-family: 'Merriweather', serif;
+            font-size: 18px;
+            color: #6c757d;
+            transition: all 0.2s ease;
         }
         
         .tab.active {
             border-bottom-color: #007bff;
             color: #007bff;
-            font-weight: bold;
         }
         
         .tab-content {
@@ -240,50 +266,48 @@
 </head>
 <body>
     <div class="header">
-        <h1>🤖 Интегрированная система</h1>
-        <p>Математическая визуализация + Система агентов</p>
+        <h1>Многоагентная система для управления производисвенными процессами</h1>
     </div>
 
     <div class="container">
-        <!-- Левая панель: Математическая визуализация -->
+        <!-- Левая панель: Граф агентов -->
         <div class="section">
-            <h2>🧮 Математическая визуализация</h2>
-            <div class="canvas-container">
-                <canvas id="mathCanvas" width="500" height="400"></canvas>
-            </div>
+            <h2>Граф агентов</h2>
+                         <div class="canvas-container">
+                 <canvas id="mathCanvas" width="1200" height="800"></canvas>
+             </div>
             
             <div>
-                <button id="startBtn" class="button">Запустить</button>
+                <button id="startBtn" class="button start">Запустить</button>
                 <button id="stopBtn" class="button stop" disabled>Остановить</button>
-            </div>
-            
-            <div id="mathStatus" class="status idle">
-                Статус: Ожидание
-            </div>
-            
-            <div>
-                <h3>Логи математики</h3>
-                <div id="mathLogContainer" class="log-container"></div>
+                <button id="resetBtn" class="button reset" disabled>Сброс</button>
             </div>
         </div>
         
         <!-- Правая панель: Система агентов -->
         <div class="section">
-            <h2>🤖 Система агентов</h2>
+            <h2>Система агентов</h2>
             
             <div class="agent-input">
-                <input type="text" id="agentInput" placeholder="Введите ваш запрос..." />
-                <button id="sendAgentBtn" class="button agent">Отправить</button>
+                <input type="text" id="agentInput" placeholder="Введите ваш запрос..." disabled />
+                <button id="sendAgentBtn" class="button agent" disabled>Отправить</button>
             </div>
             
             <div class="tabs">
                 <button class="tab active" onclick="showTab('result')">Результат</button>
+                <button class="tab" onclick="showTab('logs')">Логи агентов</button>
                 <button class="tab" onclick="showTab('history')">История</button>
             </div>
             
             <div id="resultTab" class="tab-content active">
                 <div id="agentResult" class="agent-result">
                     <p>Введите запрос выше, чтобы получить ответ от агентов...</p>
+                </div>
+            </div>
+            
+            <div id="logsTab" class="tab-content">
+                <div id="agentLogs" class="agent-logs">
+                    <p>Логи работы агентов появятся здесь...</p>
                 </div>
             </div>
             
@@ -302,8 +326,22 @@
                 this.ctx = this.canvas.getContext('2d');
                 this.nodes = {};
                 this.connections = {};
+                this.activeNodes = [];
+                this.activeConnections = [];
                 this.draggedNode = null;
                 this.isProcessing = false;
+                this.highlightQueue = [];
+                this.isHighlighting = false;
+                this.resetTimer = null;
+                this.lastActiveNodes = [];
+                this.lastActiveConnections = [];
+                this.isResetting = false;
+                this.isAnimationBlocked = false; // Флаг блокировки анимации после сброса
+                
+                // Переменные для моргания
+                this.blinkingNode = null;
+                this.blinkTimer = null;
+                this.isBlinking = false;
                 
                 this.setupEventListeners();
                 this.updateInterval = null;
@@ -314,8 +352,26 @@
                 this.canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
                 this.canvas.addEventListener('mouseup', this.onMouseUp.bind(this));
                 
-                document.getElementById('startBtn').addEventListener('click', this.startProcessing.bind(this));
+                document.getElementById('startBtn').addEventListener('click', async () => {
+                    await this.startProcessing();
+                });
                 document.getElementById('stopBtn').addEventListener('click', this.stopProcessing.bind(this));
+                document.getElementById('resetBtn').addEventListener('click', this.resetHighlighting.bind(this));
+                
+                // Добавляем обработчик изменения размера контейнера
+                const container = this.canvas.parentElement;
+                const resizeObserver = new ResizeObserver(() => {
+                    this.resizeCanvas();
+                });
+                resizeObserver.observe(container);
+            }
+            
+            resizeCanvas() {
+                const container = this.canvas.parentElement;
+                const rect = container.getBoundingClientRect();
+                this.canvas.width = rect.width - 4; // Account for border
+                this.canvas.height = rect.height - 4;
+                this.draw();
             }
             
             onMouseDown(event) {
@@ -341,18 +397,6 @@
                     this.nodes[this.draggedNode].x = x;
                     this.nodes[this.draggedNode].y = y;
                     
-                    fetch('/api/update_node', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            node: this.draggedNode,
-                            x: x,
-                            y: y
-                        })
-                    });
-                    
                     this.draw();
                 }
             }
@@ -361,38 +405,57 @@
                 this.draggedNode = null;
             }
             
-            startProcessing() {
-                fetch('/api/start')
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'started') {
-                            this.isProcessing = true;
-                            document.getElementById('startBtn').disabled = true;
-                            document.getElementById('stopBtn').disabled = false;
-                            this.addLog('Программа запущена', 'success');
-                            this.startUpdateInterval();
-                        }
-                    });
+            async startProcessing() {
+                // Полный сброс системы в исходное состояние
+                this.resetToInitialState();
+                
+                // Запускаем визуализацию (сброс состояния происходит автоматически на сервере)
+                try {
+                    const response = await fetch('/api/start');
+                    const data = await response.json();
+                    if (!data.success) {
+                        console.error('Ошибка запуска визуализации:', data.error);
+                    }
+                } catch (error) {
+                    console.error('Ошибка при запуске визуализации:', error);
+                }
+                
+                this.isProcessing = true;
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                
+                // Активируем поля ввода
+                document.getElementById('agentInput').disabled = false;
+                document.getElementById('sendAgentBtn').disabled = false;
+                
+                this.startUpdateInterval();
             }
             
             stopProcessing() {
-                fetch('/api/stop')
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'stopped') {
-                            this.isProcessing = false;
-                            document.getElementById('startBtn').disabled = false;
-                            document.getElementById('stopBtn').disabled = true;
-                            this.addLog('Программа остановлена', 'warning');
-                            this.stopUpdateInterval();
-                        }
-                    });
+                if (this.isProcessing) {
+                    this.isProcessing = false;
+                    document.getElementById('startBtn').disabled = false;
+                    document.getElementById('stopBtn').disabled = true;
+                    
+                    // Деактивируем поля ввода
+                    document.getElementById('agentInput').disabled = true;
+                    document.getElementById('sendAgentBtn').disabled = true;
+                    
+                    this.stopUpdateInterval();
+                    
+                    // Визуализация нажатия кнопки остановки
+                    const stopBtn = document.getElementById('stopBtn');
+                    stopBtn.classList.add('clicked');
+                    setTimeout(() => {
+                        stopBtn.classList.remove('clicked');
+                    }, 1000);
+                }
             }
             
             startUpdateInterval() {
                 this.updateInterval = setInterval(() => {
                     this.updateState();
-                }, 100);
+                }, 300); // Увеличиваем частоту обновления для более плавной анимации
             }
             
             stopUpdateInterval() {
@@ -400,106 +463,333 @@
                     clearInterval(this.updateInterval);
                     this.updateInterval = null;
                 }
+                // Останавливаем моргание при остановке визуализации
+                this.stopBlinking();
             }
             
             updateState() {
                 fetch('/api/state')
                     .then(response => response.json())
                     .then(data => {
-                        this.updateGraph(data.graph);
-                        this.updateStatus(data.processor);
-                        this.updateConnections(data.processor);
+                        if (data.success && data.agent_graph) {
+                            this.updateGraph(data.agent_graph);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Ошибка обновления состояния:', error);
                     });
             }
             
             updateGraph(graphData) {
                 this.nodes = graphData.nodes;
                 this.connections = graphData.connections;
+                
+                // Проверяем, изменились ли активные узлы и связи
+                const currentActiveNodes = graphData.activeNodes || [];
+                const currentActiveConnections = graphData.activeConnections || [];
+                
+                // Сравниваем с предыдущим состоянием
+                const nodesChanged = JSON.stringify(currentActiveNodes.sort()) !== JSON.stringify(this.lastActiveNodes.sort());
+                const connectionsChanged = JSON.stringify(currentActiveConnections.sort()) !== JSON.stringify(this.lastActiveConnections.sort());
+                
+                // Если есть изменения, мы не в процессе сброса и анимация не заблокирована, запускаем новую анимацию
+                if ((nodesChanged || connectionsChanged) && !this.isResetting && !this.isAnimationBlocked) {
+                    this.lastActiveNodes = [...currentActiveNodes];
+                    this.lastActiveConnections = [...currentActiveConnections];
+                    this.queueHighlighting(currentActiveNodes, currentActiveConnections);
+                }
+                
                 this.draw();
             }
             
-            updateStatus(processorState) {
-                const statusElement = document.getElementById('mathStatus');
-                const status = processorState.status;
+            queueHighlighting(activeNodes, activeConnections) {
+                // Очищаем текущие активные узлы и связи
+                this.activeNodes = [];
+                this.activeConnections = [];
                 
-                statusElement.className = `status ${status}`;
+                // Группируем узлы по уровням
+                const levels = this.groupNodesByLevel(activeNodes);
                 
-                let statusText = `Статус: ${this.getStatusText(status)}`;
-                if (processorState.operation) {
-                    statusText += ` | Операция: ${processorState.operation}`;
-                }
-                if (processorState.numbers) {
-                    statusText += ` | Числа: ${processorState.numbers[0]}, ${processorState.numbers[1]}`;
-                }
-                if (processorState.result !== null) {
-                    statusText += ` | Результат: ${processorState.result}`;
+                // Очищаем предыдущую очередь
+                this.highlightQueue = [];
+                
+                // Добавляем узлы в очередь по уровням
+                for (const level of levels) {
+                    this.highlightQueue.push({
+                        type: 'nodes',
+                        items: level,
+                        delay: 0
+                    });
                 }
                 
-                statusElement.textContent = statusText;
+                // Добавляем связи в очередь
+                this.highlightQueue.push({
+                    type: 'connections',
+                    items: activeConnections,
+                    delay: 0
+                });
+                
+                // Запускаем процесс подсветки
+                this.processHighlightQueue();
             }
             
-            getStatusText(status) {
-                const statusMap = {
-                    'idle': 'Ожидание',
+            resetHighlighting() {
+                this.isResetting = true;
+                this.activeNodes = [];
+                this.activeConnections = [];
+                this.lastActiveNodes = [];
+                this.lastActiveConnections = [];
+                this.isAnimationBlocked = true; // Блокируем анимацию до нового запроса
+                
+                // Останавливаем моргание
+                this.stopBlinking();
+                
+                // Отключаем кнопку сброса
+                document.getElementById('resetBtn').disabled = true;
+                
+                this.draw();
+                
+                // Сбрасываем флаг через небольшую задержку
+                setTimeout(() => {
+                    this.isResetting = false;
+                }, 100);
+            }
+            
+            groupNodesByLevel(activeNodes) {
+                const levels = [];
+                const nodeLevels = {
+                    'request': 0,
+                    'censor': 1,
+                    'orchestrator': 2,
+                    'buyer': 3,
+                    'logistics': 3,
+                    'production': 3,
+                    'quality': 3,
+                    'fetch_prices': 4,
+                    'check_stock': 4,
+                    'track_delivery': 4,
+                    'get_deliveries': 4,
+                    'get_line_status': 4,
+                    'get_production_summary': 4,
+                    'check_batch_quality': 4,
+                    'get_failed_batches': 4
+                };
+                
+                const levelMap = {};
+                
+                for (const node of activeNodes) {
+                    const level = nodeLevels[node] || 0;
+                    if (!levelMap[level]) {
+                        levelMap[level] = [];
+                    }
+                    levelMap[level].push(node);
+                }
+                
+                // Сортируем уровни и добавляем в массив
+                const sortedLevels = Object.keys(levelMap).sort((a, b) => parseInt(a) - parseInt(b));
+                for (const level of sortedLevels) {
+                    levels.push(levelMap[level]);
+                }
+                
+                return levels;
+            }
+            
+            processHighlightQueue() {
+                if (this.isHighlighting || this.highlightQueue.length === 0) {
+                    return;
+                }
+                
+                this.isHighlighting = true;
+                this.processNextHighlightItem();
+            }
+            
+            processNextHighlightItem() {
+                if (this.highlightQueue.length === 0) {
+                    this.isHighlighting = false;
+                    // Останавливаем моргание в конце цикла
+                    this.stopBlinking();
+                    // Активируем кнопку сброса после завершения анимации
+                    document.getElementById('resetBtn').disabled = false;
+                    return;
+                }
+                
+                const item = this.highlightQueue.shift();
+                
+                if (item.type === 'nodes') {
+                    // Останавливаем моргание предыдущего узла и фиксируем его подсветку
+                    this.stopBlinking();
+                    
+                    // Добавляем узлы текущего уровня
+                    this.activeNodes.push(...item.items);
+                    
+                    // Запускаем моргание для последнего добавленного узла
+                    if (item.items.length > 0) {
+                        this.startBlinking(item.items[item.items.length - 1]);
+                    }
+                } else if (item.type === 'connections') {
+                    // Добавляем связи
+                    this.activeConnections.push(...item.items);
+                }
+                
+                this.draw();
+                
+                // Если есть еще элементы в очереди, ждем 300мс перед следующим
+                if (this.highlightQueue.length > 0) {
+                    setTimeout(() => {
+                        this.processNextHighlightItem();
+                    }, 300);
+                } else {
+                    this.isHighlighting = false;
+                    // Останавливаем моргание в конце цикла
+                    this.stopBlinking();
+                    // Активируем кнопку сброса после завершения анимации
+                    document.getElementById('resetBtn').disabled = false;
+                }
+            }
+            
+            getNodeColor(nodeName) {
+                if (this.activeNodes.includes(nodeName)) {
+                    // Если узел моргает, чередуем цвета
+                    if (this.blinkingNode === nodeName && this.isBlinking) {
+                        const currentTime = Date.now();
+                        const isVisible = Math.floor(currentTime / 1000) % 2 === 0; // Моргание каждые 1000мс (1 секунда подсвечен, 1 секунда нет)
+                        return isVisible ? '#00ff00' : '#ff1493';
+                    }
+                    return '#00ff00'; // Ярко-зеленый для активных узлов
+                }
+                return '#ff1493'; // Ярко-красный, ближе к розовому для неактивных
+            }
+            
+                         drawConnections() {
+                 for (const [name, connection] of Object.entries(this.connections)) {
+                     // Проверяем, активна ли связь
+                     const isActive = this.activeConnections.includes(name);
+                     
+                     this.ctx.strokeStyle = isActive ? '#00ff00' : '#666';
+                     this.ctx.lineWidth = isActive ? 4 : 2;
+                     
+                     // Рисуем линию
+                     this.ctx.beginPath();
+                     this.ctx.moveTo(connection.start[0], connection.start[1]);
+                     this.ctx.lineTo(connection.end[0], connection.end[1]);
+                     this.ctx.stroke();
+                     
+                     // Рисуем стрелку
+                     this.drawArrow(connection.start[0], connection.start[1], connection.end[0], connection.end[1], isActive);
+                 }
+             }
+             
+             drawArrow(fromX, fromY, toX, toY, isActive) {
+                 const headLength = 15;
+                 const angle = Math.atan2(toY - fromY, toX - fromX);
+                 
+                 // Находим точку на линии, откуда начинается стрелка (немного отступаем от конца)
+                 const arrowStartX = toX - headLength * Math.cos(angle);
+                 const arrowStartY = toY - headLength * Math.sin(angle);
+                 
+                 // Рисуем стрелку
+                 this.ctx.strokeStyle = isActive ? '#00ff00' : '#666';
+                 this.ctx.lineWidth = isActive ? 4 : 2;
+                 
+                 this.ctx.beginPath();
+                 this.ctx.moveTo(arrowStartX, arrowStartY);
+                 this.ctx.lineTo(toX, toY);
+                 this.ctx.stroke();
+                 
+                 // Рисуем наконечник стрелки
+                 this.ctx.fillStyle = isActive ? '#00ff00' : '#666';
+                 this.ctx.beginPath();
+                 this.ctx.moveTo(toX, toY);
+                 this.ctx.lineTo(
+                     toX - headLength * Math.cos(angle - Math.PI / 6),
+                     toY - headLength * Math.sin(angle - Math.PI / 6)
+                 );
+                 this.ctx.lineTo(
+                     toX - headLength * Math.cos(angle + Math.PI / 6),
+                     toY - headLength * Math.sin(angle + Math.PI / 6)
+                 );
+                 this.ctx.closePath();
+                 this.ctx.fill();
+             }
+            
+             drawNodes() {
+    for (const [name, node] of Object.entries(this.nodes)) {
+        const isRect = (name === 'track_delivery' || name === 'get_deliveries' ||
+            name == 'fetch_prices' || name == 'check_stock' || name == 'get_line_status' || 
+            name == 'get_production_summary' || name == 'check_batch_quality' || name == 'get_failed_batches' 
+        );
+
+        if (isRect) {
+            // Рисуем прямоугольник
+            const width = node.radius * 2;
+            const height = node.radius * 1.7;
+            const x = node.x - width / 2;
+            const y = node.y - height / 2;
+
+            this.ctx.fillStyle = this.getNodeColor(name);
+            this.ctx.fillRect(x, y, width, height);
+
+            this.ctx.strokeStyle = '#000';
+            this.ctx.lineWidth = 2;
+            this.ctx.strokeRect(x, y, width, height);
+
+            // Рисуем текст в прямоугольнике
+            this.ctx.fillStyle = '#000';
+            this.ctx.font = 'bold 16px Courier New';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.fillText(this.getNodeLabel(name), node.x, node.y);
+        } else {
+            // Рисуем круг
+            this.ctx.fillStyle = this.getNodeColor(name);
+            this.ctx.beginPath();
+            this.ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI);
+            this.ctx.fill();
+
+            this.ctx.strokeStyle = '#000';
+            this.ctx.lineWidth = 2;
+            this.ctx.stroke();
+
+            // Рисуем текст в круге
+            this.ctx.fillStyle = '#000';
+            this.ctx.font = 'bold 16px Courier New';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+
+            const label = this.getNodeLabel(name);
+            if (name === 'production') {
+                this.ctx.fillText('Произ-', node.x, node.y - 8);
+                this.ctx.fillText('водство', node.x, node.y + 8);
+            } else if (name === 'orchestrator') {
+                this.ctx.fillText('Оркестра-', node.x, node.y - 8);
+                this.ctx.fillText('тор', node.x, node.y + 8);
+            } else {
+                this.ctx.fillText(label, node.x, node.y);
+            }
+        }
+    }
+}
+
+            
+            getNodeLabel(name) {
+                const labels = {
                     'request': 'Запрос',
-                    'calculation': 'Вычисление',
-                    'result': 'Результат'
+                    'censor': 'Цензор',
+                    'orchestrator': 'Оркестратор',
+                    'buyer': 'Закупки',
+                    'logistics': 'Логистика',
+                    'production': 'Производство',
+                    'quality': 'Качество',
+                    'fetch_prices': 'Цены',
+                    'check_stock': 'Склад',
+                    'track_delivery': 'Трекинг',
+                    'get_deliveries': 'Поставки',
+                    'get_line_status': 'Линии',
+                    'get_production_summary': 'Сводка',
+                    'check_batch_quality': 'Партии',
+                    'get_failed_batches': 'Брак'
                 };
-                return statusMap[status] || status;
-            }
-            
-            updateConnections(processorState) {
-                const status = processorState.status;
-                const operation = processorState.operation;
-                
-                this.resetConnections();
-                
-                if (status === 'request') {
-                    if (operation === 'sum') {
-                        this.highlightConnection('req_to_sum', 'request');
-                    } else if (operation === 'product') {
-                        this.highlightConnection('req_to_product', 'request');
-                    }
-                } else if (status === 'calculation') {
-                    if (operation === 'sum') {
-                        this.highlightConnection('req_to_sum', 'calculation');
-                    } else if (operation === 'product') {
-                        this.highlightConnection('req_to_product', 'calculation');
-                    }
-                } else if (status === 'result') {
-                    if (operation === 'sum') {
-                        this.highlightConnection('sum_to_req', 'result');
-                    } else if (operation === 'product') {
-                        this.highlightConnection('product_to_req', 'result');
-                    }
-                }
-            }
-            
-            resetConnections() {
-                this.draw();
-            }
-            
-            highlightConnection(connectionName, type) {
-                this.draw();
-                
-                const connection = this.connections[connectionName];
-                if (connection) {
-                    this.ctx.strokeStyle = this.getConnectionColor(type);
-                    this.ctx.lineWidth = 3;
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(connection.start[0], connection.start[1]);
-                    this.ctx.lineTo(connection.end[0], connection.end[1]);
-                    this.ctx.stroke();
-                }
-            }
-            
-            getConnectionColor(type) {
-                const colors = {
-                    'request': '#ffc107',
-                    'calculation': '#17a2b8',
-                    'result': '#28a745'
-                };
-                return colors[type] || '#666';
+                return labels[name] || name;
             }
             
             draw() {
@@ -509,69 +799,94 @@
                 this.drawNodes();
             }
             
-            drawConnections() {
-                this.ctx.strokeStyle = '#666';
-                this.ctx.lineWidth = 2;
-                
-                for (const [name, connection] of Object.entries(this.connections)) {
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(connection.start[0], connection.start[1]);
-                    this.ctx.lineTo(connection.end[0], connection.end[1]);
-                    this.ctx.stroke();
+            unblockAnimation() {
+                this.isAnimationBlocked = false;
+            }
+            
+            startBlinking(nodeName) {
+                this.stopBlinking();
+                this.blinkingNode = nodeName;
+                this.isBlinking = true;
+                this.blinkTimer = setInterval(() => {
+                    this.draw(); // Перерисовываем для обновления моргания
+                }, 1000); // Моргание каждые 1000мс (1 секунда)
+            }
+            
+            stopBlinking() {
+                if (this.blinkTimer) {
+                    clearInterval(this.blinkTimer);
+                    this.blinkTimer = null;
                 }
+                this.blinkingNode = null;
+                this.isBlinking = false;
             }
             
-            drawNodes() {
-                for (const [name, node] of Object.entries(this.nodes)) {
-                    this.ctx.fillStyle = this.getNodeColor(name);
-                    this.ctx.beginPath();
-                    this.ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI);
-                    this.ctx.fill();
-                    
-                    this.ctx.strokeStyle = '#333';
-                    this.ctx.lineWidth = 2;
-                    this.ctx.stroke();
-                    
-                    this.ctx.fillStyle = '#fff';
-                    this.ctx.font = '14px Arial';
-                    this.ctx.textAlign = 'center';
-                    this.ctx.textBaseline = 'middle';
-                    this.ctx.fillText(this.getNodeLabel(name), node.x, node.y);
-                }
-            }
-            
-            getNodeColor(name) {
-                const colors = {
-                    'request': '#007bff',
-                    'sum': '#28a745',
-                    'product': '#ffc107'
-                };
-                return colors[name] || '#6c757d';
-            }
-            
-            getNodeLabel(name) {
-                const labels = {
-                    'request': 'Запрос',
-                    'sum': 'Сумма',
-                    'product': 'Произведение'
-                };
-                return labels[name] || name;
-            }
-            
-            addLog(message, type = 'info') {
-                const logContainer = document.getElementById('mathLogContainer');
-                const logEntry = document.createElement('div');
-                logEntry.className = `log-entry log-${type}`;
-                logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-                logContainer.appendChild(logEntry);
-                logContainer.scrollTop = logContainer.scrollHeight;
-            }
+                         resetToInitialState() {
+                 // Останавливаем все таймеры и интервалы
+                 this.stopUpdateInterval();
+                 this.stopBlinking();
+                 
+                 // Сбрасываем все флаги состояния
+                 this.isProcessing = false;
+                 this.isHighlighting = false;
+                 this.isResetting = false;
+                 this.isAnimationBlocked = false;
+                 
+                 // Очищаем все активные элементы
+                 this.activeNodes = [];
+                 this.activeConnections = [];
+                 this.lastActiveNodes = [];
+                 this.lastActiveConnections = [];
+                 this.highlightQueue = [];
+                 this.draggedNode = null;
+                 
+                 // Сбрасываем состояние кнопок
+                 document.getElementById('startBtn').disabled = false;
+                 document.getElementById('stopBtn').disabled = true;
+                 document.getElementById('resetBtn').disabled = true;
+                 
+                 // Блокируем поля ввода
+                 document.getElementById('agentInput').disabled = true;
+                 document.getElementById('sendAgentBtn').disabled = true;
+                 
+                 // Очищаем поле ввода
+                 document.getElementById('agentInput').value = '';
+                 
+                 // Очищаем результат агента
+                 document.getElementById('agentResult').innerHTML = '<p>Введите запрос выше, чтобы получить ответ от агентов...</p>';
+                 
+                 // Очищаем логи агентов
+                 document.getElementById('agentLogs').innerHTML = '<p>Логи работы агентов появятся здесь...</p>';
+                 
+                 // Очищаем историю агентов
+                 document.getElementById('agentHistory').innerHTML = '<p>История запросов появится здесь...</p>';
+                 
+                 // Переключаем на вкладку "Результат"
+                 const tabContents = document.querySelectorAll('.tab-content');
+                 tabContents.forEach(content => content.classList.remove('active'));
+                 document.getElementById('resultTab').classList.add('active');
+                 
+                 const tabs = document.querySelectorAll('.tab');
+                 tabs.forEach(tab => tab.classList.remove('active'));
+                 document.querySelector('.tab').classList.add('active');
+                 
+                 // Останавливаем обновление логов
+                 if (window.agentSystem) {
+                     window.agentSystem.stopLogsUpdate();
+                 }
+                 
+                 // Перерисовываем граф в исходном состоянии
+                 this.draw();
+             }
         }
 
-        class AgentSystem {
-            constructor() {
-                this.setupEventListeners();
-            }
+                 class AgentSystem {
+             constructor() {
+                 this.visualizer = new MathVisualizer();
+                 this.setupEventListeners();
+                 this.logsUpdateInterval = null;
+                 this.lastLogsCount = 0;
+             }
             
             setupEventListeners() {
                 document.getElementById('sendAgentBtn').addEventListener('click', this.sendQuery.bind(this));
@@ -582,138 +897,144 @@
                 });
             }
             
-            sendQuery() {
-                const input = document.getElementById('agentInput');
-                const query = input.value.trim();
-                
-                if (!query) {
-                    this.showError('Введите запрос');
-                    return;
+                         async sendQuery() {
+                 const input = document.getElementById('agentInput');
+                 const query = input.value.trim();
+                 
+                 if (!query) return;
+                 
+                 // Разблокируем анимацию для нового запроса
+                 this.visualizer.unblockAnimation();
+                 
+                 // Запускаем автоматическое обновление логов
+                 this.startLogsUpdate();
+                 
+                 const resultDiv = document.getElementById('agentResult');
+                 resultDiv.innerHTML = '<p>Обрабатываю запрос...</p>';
+                 
+                 try {
+                     const response = await fetch('/api/agent/query', {
+                         method: 'POST',
+                         headers: {
+                             'Content-Type': 'application/json'
+                         },
+                         body: JSON.stringify({ query })
+                     });
+                     
+                     const data = await response.json();
+                     
+                     if (data.success) {
+                         resultDiv.innerHTML = `<p><strong>Ответ:</strong></p><p>${data.result}</p>`;
+                     } else {
+                         resultDiv.innerHTML = `<p><strong>Ошибка:</strong> ${data.error}</p>`;
+                     }
+                     
+                     input.value = '';
+                     
+                     // Останавливаем обновление логов через 5 секунд после завершения
+                     setTimeout(() => {
+                         this.stopLogsUpdate();
+                     }, 5000);
+                     
+                 } catch (error) {
+                     resultDiv.innerHTML = `<p><strong>Ошибка:</strong> ${error.message}</p>`;
+                     this.stopLogsUpdate();
+                 }
+             }
+             
+             startLogsUpdate() {
+                 // Останавливаем предыдущий интервал если есть
+                 this.stopLogsUpdate();
+                 
+                 // Запускаем обновление логов каждые 500мс
+                 this.logsUpdateInterval = setInterval(() => {
+                     this.loadAgentLogs();
+                 }, 500);
+             }
+             
+             stopLogsUpdate() {
+                 if (this.logsUpdateInterval) {
+                     clearInterval(this.logsUpdateInterval);
+                     this.logsUpdateInterval = null;
+                 }
+             }
+            
+                         async loadAgentLogs() {
+                 try {
+                     const response = await fetch('/api/agent/logs');
+                     const data = await response.json();
+                     
+                     const logsDiv = document.getElementById('agentLogs');
+                     if (data.success && data.logs.length > 0) {
+                         logsDiv.innerHTML = data.logs.map(log => 
+                             `<div class="log-entry ${log.level}">
+                                 [${log.timestamp}] ${log.message}
+                             </div>`
+                         ).join('');
+                         
+                         // Прокручиваем к последнему логу
+                         logsDiv.scrollTop = logsDiv.scrollHeight;
+                     } else {
+                         logsDiv.innerHTML = '<p>Логи пока пусты...</p>';
+                     }
+                 } catch (error) {
+                     console.error('Ошибка загрузки логов:', error);
+                 }
+             }
+            
+            async loadAgentHistory() {
+                try {
+                    const response = await fetch('/api/agent/history');
+                    const data = await response.json();
+                    
+                    const historyDiv = document.getElementById('agentHistory');
+                    if (data.success && data.history.length > 0) {
+                        historyDiv.innerHTML = data.history.map(entry => 
+                            `<div style="margin-bottom: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                                <div><strong>Время:</strong> ${new Date(entry.timestamp).toLocaleString()}</div>
+                                <div><strong>Запрос:</strong> ${entry.user_input}</div>
+                                <div><strong>Ответ:</strong> ${entry.agent_response}</div>
+                            </div>`
+                        ).join('');
+                    } else {
+                        historyDiv.innerHTML = '<p>История пока пуста...</p>';
+                    }
+                } catch (error) {
+                    console.error('Ошибка загрузки истории:', error);
                 }
-                
-                this.showLoading();
-                
-                fetch('/api/agent/query', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ query: query })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    this.showResult(data);
-                    input.value = '';
-                    this.loadHistory();
-                })
-                .catch(error => {
-                    this.showError(`Ошибка: ${error.message}`);
-                });
-            }
-            
-            showLoading() {
-                const resultDiv = document.getElementById('agentResult');
-                resultDiv.innerHTML = '<p>🤔 Обрабатываю запрос...</p>';
-            }
-            
-            showResult(data) {
-                const resultDiv = document.getElementById('agentResult');
-                
-                if (data.error) {
-                    resultDiv.innerHTML = `<p style="color: red;">❌ Ошибка: ${data.error}</p>`;
-                    return;
-                }
-                
-                let html = '<div>';
-                html += `<h4>🤖 Результат от агента: ${data.next_agent?.replace('_', ' ').toUpperCase() || 'ОБЩИЙ'}</h4>`;
-                html += `<p><strong>Запрос:</strong> ${data.messages?.[0]?.content || 'Неизвестно'}</p>`;
-                html += `<p><strong>Ответ:</strong> ${data.result || 'Нет ответа'}</p>`;
-                
-                if (data.messages && data.messages.length > 1) {
-                    html += '<h5>💬 Диалог:</h5>';
-                    html += '<div style="max-height: 200px; overflow-y: auto; background: #f8f9fa; padding: 10px; border-radius: 5px;">';
-                    data.messages.forEach((msg, index) => {
-                        const isUser = msg.type === 'human' || index === 0;
-                        const icon = isUser ? '👤' : '🤖';
-                        html += `<p><strong>${icon}</strong> ${msg.content}</p>`;
-                    });
-                    html += '</div>';
-                }
-                
-                html += '</div>';
-                resultDiv.innerHTML = html;
-            }
-            
-            showError(message) {
-                const resultDiv = document.getElementById('agentResult');
-                resultDiv.innerHTML = `<p style="color: red;">❌ ${message}</p>`;
-            }
-            
-            loadHistory() {
-                fetch('/api/agent/history')
-                    .then(response => response.json())
-                    .then(history => {
-                        this.displayHistory(history);
-                    })
-                    .catch(error => {
-                        console.error('Ошибка загрузки истории:', error);
-                    });
-            }
-            
-            displayHistory(history) {
-                const historyDiv = document.getElementById('agentHistory');
-                
-                if (history.length === 0) {
-                    historyDiv.innerHTML = '<p>История пуста</p>';
-                    return;
-                }
-                
-                let html = '';
-                history.reverse().forEach(item => {
-                    const timestamp = new Date(item.timestamp).toLocaleString();
-                    html += `
-                        <div class="history-item">
-                            <div class="timestamp">${timestamp}</div>
-                            <div class="input"><strong>Запрос:</strong> ${item.input}</div>
-                            <div class="result"><strong>Ответ:</strong> ${item.result?.result || 'Нет ответа'}</div>
-                        </div>
-                    `;
-                });
-                
-                historyDiv.innerHTML = html;
             }
         }
 
-        function showTab(tabName) {
-            // Скрываем все вкладки
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Показываем выбранную вкладку
-            document.getElementById(tabName + 'Tab').classList.add('active');
-            event.target.classList.add('active');
-            
-            // Если выбрана вкладка истории, загружаем её
-            if (tabName === 'history') {
-                agentSystem.loadHistory();
-            }
-        }
+                 function showTab(tabName) {
+             // Скрываем все вкладки
+             const tabContents = document.querySelectorAll('.tab-content');
+             tabContents.forEach(content => content.classList.remove('active'));
+             
+             const tabs = document.querySelectorAll('.tab');
+             tabs.forEach(tab => tab.classList.remove('active'));
+             
+             // Показываем выбранную вкладку
+             document.getElementById(tabName + 'Tab').classList.add('active');
+             event.target.classList.add('active');
+             
+             // Загружаем данные для вкладки
+             if (tabName === 'logs') {
+                 agentSystem.loadAgentLogs();
+                 // Запускаем автоматическое обновление логов
+                 agentSystem.startLogsUpdate();
+             } else if (tabName === 'history') {
+                 agentSystem.loadAgentHistory();
+                 // Останавливаем обновление логов при переключении на другие вкладки
+                 agentSystem.stopLogsUpdate();
+             } else {
+                 // Останавливаем обновление логов при переключении на другие вкладки
+                 agentSystem.stopLogsUpdate();
+             }
+         }
 
-        // Инициализация приложения
-        document.addEventListener('DOMContentLoaded', () => {
-            window.mathVisualizer = new MathVisualizer();
-            window.agentSystem = new AgentSystem();
-            
-            // Начальная загрузка состояния
-            mathVisualizer.updateState();
-            
-            // Добавляем начальное сообщение
-            mathVisualizer.addLog('Интегрированное приложение загружено', 'info');
-        });
+                 // Инициализация системы
+         const agentSystem = new AgentSystem();
+         window.agentSystem = agentSystem; // Делаем глобально доступным
     </script>
 </body>
 </html> 

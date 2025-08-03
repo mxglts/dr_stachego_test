@@ -14,20 +14,26 @@ def main():
     print("🚀 Запуск интегрированной системы...")
     print("📊 Математическая визуализация + Система агентов")
     
-    # Проверяем наличие зависимостей
+    # Проверяем наличие виртуального окружения
+    if not os.path.exists("venv"):
+        print("⚠️  Виртуальное окружение не найдено!")
+        print("🔧 Запустите сначала: python setup_venv.py")
+        return
+    
+    # Проверяем наличие файла .env
+    if not os.path.exists('.env'):
+        print("\n⚠️  Файл .env не найден!")
+        print("📝 Создайте файл .env с вашим API ключом Together AI:")
+        print("TOGETHER_API_KEY=ваш_ключ_здесь")
+        print("\n💡 Получите ключ на https://together.ai")
+        print("📄 Пример файла создан в env_example.txt")
+        return
+    
+    # Проверяем наличие основных зависимостей
     required_packages = [
         'flask',
-        'langchain',
-        'langchain-community', 
-        'langchain-core',
-        'langgraph',
-        'llama-index',
-        'llama-index-llms-together',
-        'together',
-        'streamlit',
-        'graphviz',
-        'wikipedia',
-        'python-dotenv'
+        'llama_index',
+        'python_dotenv'
     ]
     
     missing_packages = []
@@ -41,28 +47,14 @@ def main():
             print(f"❌ {package} не установлен")
     
     if missing_packages:
-        print(f"\n📦 Устанавливаем недостающие пакеты: {', '.join(missing_packages)}")
-        for package in missing_packages:
-            try:
-                subprocess.check_call([sys.executable, "-m", "pip", "install", package])
-                print(f"✅ {package} установлен")
-            except subprocess.CalledProcessError:
-                print(f"❌ Ошибка установки {package}")
-                return
+        print(f"\n📦 Недостающие пакеты: {', '.join(missing_packages)}")
+        print("🔧 Активируйте виртуальное окружение и установите зависимости:")
+        print("   venv\\Scripts\\activate  # Windows")
+        print("   source venv/bin/activate  # Linux/Mac")
+        print("   pip install -r requirements.txt")
+        return
     
-    # Проверяем наличие файла .env
-    if not os.path.exists('.env'):
-        print("\n⚠️  Файл .env не найден!")
-        print("📝 Создайте файл .env с вашим API ключом Together AI:")
-        print("TOGETHER_API_KEY=ваш_ключ_здесь")
-        print("\n💡 Получите ключ на https://together.ai")
-        
-        # Создаем пример файла .env
-        with open('.env.example', 'w') as f:
-            f.write("# Скопируйте этот файл в .env и добавьте ваш API ключ\n")
-            f.write("TOGETHER_API_KEY=ваш_ключ_здесь\n")
-        
-        print("📄 Создан файл .env.example для примера")
+
     
     # Запускаем интегрированное приложение
     print("\n🌐 Запуск веб-сервера...")

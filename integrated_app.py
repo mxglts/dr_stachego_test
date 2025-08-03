@@ -9,182 +9,170 @@ import os
 from datetime import datetime
 
 # Импортируем систему агентов
-from agents import run_agent_system, create_agent_graph
+try:
+    from agents import run_agent_system, create_agent_graph, clear_active_nodes, add_active_node, add_active_connection
+except ImportError as e:
+    print(f"Ошибка импорта системы агентов: {e}")
+    print("Убедитесь, что файл agents.py создан и все зависимости установлены")
+    # Создаем заглушки для случая ошибки импорта
+    def run_agent_system(user_input: str):
+        return {
+            'error': 'Система агентов недоступна',
+            'messages': [],
+            'result': 'Система агентов не загружена. Проверьте файл agents.py и зависимости.',
+            'next_agent': 'general_agent'
+        }
+    
+    def create_agent_graph():
+        return {
+            'nodes': {},
+            'connections': []
+        }
 
 app = Flask(__name__)
 
-class MathProcessor:
-    def __init__(self):
-        self.running = False
-        self.processing_thread = None
-        self.current_operation = None
-        self.current_numbers = None
-        self.current_result = None
-        self.operation_status = "idle"  # idle, request, calculation, result
-        
-    def start_processing(self):
-        if not self.running:
-            self.running = True
-            self.processing_thread = threading.Thread(target=self._run_processing_loop)
-            self.processing_thread.daemon = True
-            self.processing_thread.start()
-            
-    def stop_processing(self):
-        self.running = False
-        
-    def _run_processing_loop(self):
-        while self.running:
-            # Случайный выбор операции
-            operation = random.choice(["sum", "product"])
-            a = random.randint(1, 100)
-            b = random.randint(1, 100)
-            
-            # Запрос операции
-            self.operation_status = "request"
-            self.current_operation = operation
-            self.current_numbers = (a, b)
-            time.sleep(1)
-            
-            # Вычисление
-            self.operation_status = "calculation"
-            if operation == "sum":
-                result = self.calculate_sum(a, b)
-            else:
-                result = self.calculate_product(a, b)
-            
-            # Возврат результата
-            self.operation_status = "result"
-            self.current_result = result
-            time.sleep(1)
-            
-            # Сброс статуса
-            self.operation_status = "idle"
-            self.current_operation = None
-            self.current_numbers = None
-            self.current_result = None
-            
-            # Случайная задержка между циклами
-            delay = random.uniform(1, 5)
-            time.sleep(delay)
-    
-    def calculate_sum(self, a: int, b: int) -> int:
-        return a + b
-    
-    def calculate_product(self, a: int, b: int) -> int:
-        return a * b
-    
-    def get_current_state(self) -> Dict[str, Any]:
-        return {
-            "status": self.operation_status,
-            "operation": self.current_operation,
-            "numbers": self.current_numbers,
-            "result": self.current_result
-        }
+# Отключаем логи Flask для уменьшения вывода в терминал
+import logging
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
-# Глобальный экземпляр процессора
-math_processor = MathProcessor()
-
-class GraphVisualizer:
-    def __init__(self):
-        self.node_positions = {
-            'request': (200, 300),
-            'sum': (400, 200),
-            'product': (400, 400)
-        }
-        self.node_radius = 30
-        
-    def get_connection_points(self, x: float, y: float, radius: float) -> List[Tuple[float, float]]:
-        """Возвращает 8 точек на окружности"""
-        points = []
-        for i in range(8):
-            angle = i * math.pi / 4
-            px = x + radius * math.cos(angle)
-            py = y + radius * math.sin(angle)
-            points.append((px, py))
-        return points
-    
-    def find_optimal_connection(self, start_x: float, start_y: float, end_x: float, end_y: float, 
-                              start_radius: float, end_radius: float) -> Tuple[Tuple[float, float], Tuple[float, float]]:
-        """Находит оптимальные точки соединения между двумя узлами"""
-        start_points = self.get_connection_points(start_x, start_y, start_radius)
-        end_points = self.get_connection_points(end_x, end_y, end_radius)
-        
-        best_start = start_points[0]
-        best_end = end_points[0]
-        min_distance = float('inf')
-        
-        for start_point in start_points:
-            for end_point in end_points:
-                distance = math.sqrt((end_point[0] - start_point[0])**2 + (end_point[1] - start_point[1])**2)
-                if distance < min_distance:
-                    min_distance = distance
-                    best_start = start_point
-                    best_end = end_point
-        
-        return best_start, best_end
-    
-    def get_graph_data(self) -> Dict[str, Any]:
-        """Возвращает данные графа для фронтенда"""
-        req_x, req_y = self.node_positions['request']
-        sum_x, sum_y = self.node_positions['sum']
-        prod_x, prod_y = self.node_positions['product']
-        
-        # Находим оптимальные соединения
-        req_to_sum_start, req_to_sum_end = self.find_optimal_connection(req_x, req_y, sum_x, sum_y, self.node_radius, self.node_radius)
-        req_to_prod_start, req_to_prod_end = self.find_optimal_connection(req_x, req_y, prod_x, prod_y, self.node_radius, self.node_radius)
-        sum_to_req_start, sum_to_req_end = self.find_optimal_connection(sum_x, sum_y, req_x, req_y, self.node_radius, self.node_radius)
-        prod_to_req_start, prod_to_req_end = self.find_optimal_connection(prod_x, prod_y, req_x, req_y, self.node_radius, self.node_radius)
-        
-        return {
-            "nodes": {
-                "request": {"x": req_x, "y": req_y, "radius": self.node_radius},
-                "sum": {"x": sum_x, "y": sum_y, "radius": self.node_radius},
-                "product": {"x": prod_x, "y": prod_y, "radius": self.node_radius}
-            },
-            "connections": {
-                "req_to_sum": {"start": req_to_sum_start, "end": req_to_sum_end},
-                "req_to_product": {"start": req_to_prod_start, "end": req_to_prod_end},
-                "sum_to_req": {"start": sum_to_req_start, "end": sum_to_req_end},
-                "product_to_req": {"start": prod_to_req_start, "end": prod_to_req_end}
-            }
-        }
-    
-    def update_node_position(self, node_name: str, x: float, y: float):
-        """Обновляет позицию узла"""
-        self.node_positions[node_name] = (x, y)
-
-# Глобальный экземпляр визуализатора
-graph_visualizer = GraphVisualizer()
-
-# Система агентов
 class AgentSystem:
     def __init__(self):
-        self.agent_graph = create_agent_graph()
         self.conversation_history = []
+        self.agent_logs = []
+        self.agent_graph = {
+            'activeNodes': [],
+            'activeConnections': []
+        }
+        self.is_visualization_running = False
+        self.current_query_id = None
         
     def process_query(self, user_input: str) -> Dict[str, Any]:
-        """Обрабатывает запрос пользователя через систему агентов"""
+        # Очищаем логи агентов в начале нового запроса
+        self.agent_logs = []
+        
+        # Генерируем новый ID запроса
+        self.current_query_id = datetime.now().isoformat()
+        
+        # Добавляем начальный лог
+        self.add_log(f"Получен запрос: {user_input}")
+        
+        # Сразу подсвечиваем узел "Запрос"
+        self.update_active_nodes(['request'], [])
+        
         try:
-            result = run_agent_system(user_input)
-            self.conversation_history.append({
+            # Запускаем систему агентов с промежуточными обновлениями
+            result = self.run_agent_system_with_updates(user_input)
+            
+            # Добавляем финальный лог
+            self.add_log("Обработка запроса завершена")
+            
+            # Добавляем результат в историю
+            conversation_entry = {
                 'timestamp': datetime.now().isoformat(),
-                'input': user_input,
-                'result': result
-            })
-            return result
-        except Exception as e:
-            return {
-                'error': str(e),
-                'messages': [],
-                'result': f'Ошибка обработки запроса: {e}',
-                'next_agent': 'general_agent'
+                'user_input': user_input,
+                'agent_response': result.get('result', 'Ошибка обработки'),
+                'messages': result.get('messages', [])
             }
+            
+            self.conversation_history.append(conversation_entry)
+            
+            return {
+                'success': True,
+                'result': result.get('result', 'Ошибка обработки'),
+                'messages': result.get('messages', []),
+                'error': result.get('error', None)
+            }
+            
+        except Exception as e:
+            error_msg = f"Ошибка при обработке запроса: {str(e)}"
+            self.add_log(error_msg, 'error')
+            return {
+                'success': False,
+                'result': error_msg,
+                'messages': [],
+                'error': str(e)
+            }
+    
+    def run_agent_system_with_updates(self, user_input: str) -> Dict[str, Any]:
+        """Запускает систему агентов с промежуточными обновлениями состояния"""
+        try:
+            # Этап 1: Цензор (сразу после запроса)
+            self.add_log("Запуск цензора...")
+            time.sleep(0.3)  # Минимальное время подсветки запроса
+            
+            # Этап 2: Цензор
+            self.add_log("Проверка цензора...")
+            self.update_active_nodes(['request', 'censor'], ['request_to_censor'])
+            time.sleep(0.3)
+            
+            # Этап 3: Оркестратор
+            self.add_log("Запуск оркестратора...")
+            self.update_active_nodes(['request', 'censor', 'orchestrator'], 
+                                   ['request_to_censor', 'censor_to_orchestrator'])
+            time.sleep(0.3)
+            
+            # Запускаем основную систему агентов
+            result = run_agent_system(user_input)
+            
+            # Синхронизируем логи из agents.py
+            from agents import get_agent_logs
+            agent_logs = get_agent_logs()
+            for log_entry in agent_logs:
+                # Проверяем, нет ли уже такого лога
+                if not any(existing['message'] == log_entry['message'] and 
+                          existing['timestamp'] == log_entry['timestamp'] 
+                          for existing in self.agent_logs):
+                    self.agent_logs.append({
+                        'timestamp': log_entry['timestamp'],
+                        'level': log_entry['level'],
+                        'message': log_entry['message']
+                    })
+            
+            # Обновляем граф с финальными активными узлами
+            if 'active_nodes' in result and 'active_connections' in result:
+                self.agent_graph['activeNodes'] = result['active_nodes']
+                self.agent_graph['activeConnections'] = result['active_connections']
+            
+            return result
+            
+        except Exception as e:
+            self.add_log(f"Ошибка в системе агентов: {str(e)}", 'error')
+            raise e
+    
+    def update_active_nodes(self, nodes: List[str], connections: List[str]):
+        """Обновляет активные узлы и связи"""
+        self.agent_graph['activeNodes'] = nodes
+        self.agent_graph['activeConnections'] = connections
+    
+    def add_log(self, message: str, level: str = 'info'):
+        """Добавляет запись в логи агентов"""
+        log_entry = {
+            'timestamp': datetime.now().isoformat(),
+            'level': level,
+            'message': message
+        }
+        self.agent_logs.append(log_entry)
     
     def get_conversation_history(self) -> List[Dict[str, Any]]:
         """Возвращает историю разговоров"""
         return self.conversation_history
+    
+    def get_agent_logs(self) -> List[Dict[str, Any]]:
+        """Возвращает логи агентов"""
+        return self.agent_logs
+    
+    def start_visualization(self):
+        """Запускает визуализацию"""
+        self.is_visualization_running = True
+        return {'status': 'started'}
+    
+    def stop_visualization(self):
+        """Останавливает визуализацию"""
+        self.is_visualization_running = False
+        return {'status': 'stopped'}
 
-# Глобальный экземпляр системы агентов
+# Создаем экземпляры систем
 agent_system = AgentSystem()
 
 @app.route('/')
@@ -193,54 +181,110 @@ def index():
 
 @app.route('/api/start')
 def start_processing():
-    math_processor.start_processing()
-    return jsonify({"status": "started"})
+    """Запускает визуализацию и сбрасывает состояние"""
+    try:
+        # Сначала сбрасываем состояние
+        agent_system.agent_graph['activeNodes'] = []
+        agent_system.agent_graph['activeConnections'] = []
+        agent_system.agent_logs = []
+        agent_system.conversation_history = []
+        agent_system.current_query_id = None
+        clear_active_nodes()
+        
+        # Затем запускаем визуализацию
+        result = agent_system.start_visualization()
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/api/stop')
 def stop_processing():
-    math_processor.stop_processing()
-    return jsonify({"status": "stopped"})
+    """Останавливает визуализацию"""
+    result = agent_system.stop_visualization()
+    return jsonify(result)
+
+@app.route('/api/reset', methods=['GET', 'POST'])
+def reset_state():
+    """Сбрасывает состояние системы агентов"""
+    try:
+        # Очищаем активные узлы и связи
+        agent_system.agent_graph['activeNodes'] = []
+        agent_system.agent_graph['activeConnections'] = []
+        
+        # Очищаем логи агентов
+        agent_system.agent_logs = []
+        
+        # Очищаем историю разговоров
+        agent_system.conversation_history = []
+        
+        # Сбрасываем ID запроса
+        agent_system.current_query_id = None
+        
+        # Очищаем активные узлы в системе агентов
+        clear_active_nodes()
+        
+        return jsonify({'success': True, 'message': 'Состояние системы сброшено'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/api/state')
 def get_state():
-    processor_state = math_processor.get_current_state()
-    graph_data = graph_visualizer.get_graph_data()
-    
-    return jsonify({
-        "processor": processor_state,
-        "graph": graph_data
-    })
-
-@app.route('/api/update_node', methods=['POST'])
-def update_node():
-    data = request.get_json()
-    node_name = data.get('node')
-    x = data.get('x')
-    y = data.get('y')
-    
-    if node_name and x is not None and y is not None:
-        graph_visualizer.update_node_position(node_name, x, y)
-        return jsonify({"status": "updated"})
-    
-    return jsonify({"status": "error", "message": "Invalid data"})
+    """Возвращает текущее состояние системы"""
+    try:
+        # Получаем граф агентов
+        agent_graph_data = create_agent_graph()
+        
+        # Добавляем информацию об активных узлах и связях
+        agent_graph_data['activeNodes'] = agent_system.agent_graph['activeNodes']
+        agent_graph_data['activeConnections'] = agent_system.agent_graph['activeConnections']
+        
+        return jsonify({
+            'success': True,
+            'agent_graph': agent_graph_data
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
 
 @app.route('/api/agent/query', methods=['POST'])
 def agent_query():
     """Обрабатывает запрос к системе агентов"""
-    data = request.get_json()
-    user_input = data.get('query', '')
-    
-    if not user_input:
-        return jsonify({"error": "Query is required"})
-    
-    result = agent_system.process_query(user_input)
-    return jsonify(result)
+    try:
+        data = request.get_json()
+        user_input = data.get('query', '')
+        
+        if not user_input:
+            return jsonify({
+                'success': False,
+                'error': 'Пустой запрос'
+            })
+        
+        result = agent_system.process_query(user_input)
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Ошибка обработки запроса: {str(e)}'
+        })
 
 @app.route('/api/agent/history')
 def get_agent_history():
     """Возвращает историю разговоров с агентами"""
-    history = agent_system.get_conversation_history()
-    return jsonify(history)
+    return jsonify({
+        'success': True,
+        'history': agent_system.get_conversation_history()
+    })
+
+@app.route('/api/agent/logs')
+def get_agent_logs():
+    """Возвращает логи агентов"""
+    return jsonify({
+        'success': True,
+        'logs': agent_system.get_agent_logs()
+    })
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000) 
